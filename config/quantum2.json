@@ -1,0 +1,64 @@
+{
+  "_comment": "Raymarine Quantum 2 (Q24D). Quellen: Raymarine-Produktseite/Datenblatt (fc, Leistung, Keulen, PRF-Grenzen, Chirp, NF); Spoke-Format + Antennenhoehe: Nutzerangabe; alles mit '_assumed' = Annahme, per Kalibrierung ersetzen.",
+  "name": "Raymarine Quantum 2 Q24D",
+  "fc_hz": 9.4e9,
+  "peak_power_w": 20,
+  "antenna_gain_db": 24,
+  "_antenna_gain_db_assumed": "G ~ eta*41253/(4.9*20) mit eta~0.6 -> ~24 dBi (nicht veroeffentlicht)",
+  "az_beamwidth_deg": 4.9,
+  "el_beamwidth_deg": 20,
+  "sidelobe_db": -25,
+  "sidelobe_width_deg": 30,
+  "_sidelobe_assumed": "Nebenkeulen: breite Gauss-Komponente, Pegel/Breite geschaetzt",
+  "polarization": "H",
+  "rotation_rpm": 24,
+  "noise_figure_db": 4,
+  "system_loss_db": 3,
+  "prf_hz_limits": [920, 5900],
+  "n_spokes": 2048,
+  "n_bins": 1024,
+  "pixel_max": 252,
+  "antenna_height_m": 5.0,
+  "min_range_m": 6,
+  "bin_range_factor": 1.0,
+  "_bin_range_factor": "Laenge der 1024 Bins = RangeScale * Faktor (an echter Aufnahme pruefen)",
+
+  "range_scales": [
+    {"nm": 1,  "dem_level_m": 2,  "prf_hz": 3000, "bandwidth_hz": 32e6, "tx_pulse_s": 4.0e-7, "pulse_width_3db_s": 4.0e-8},
+    {"nm": 2,  "dem_level_m": 2,  "prf_hz": 2500, "bandwidth_hz": 32e6, "tx_pulse_s": 2.0e-6, "pulse_width_3db_s": 4.0e-8},
+    {"nm": 3,  "dem_level_m": 5,  "prf_hz": 2000, "bandwidth_hz": 32e6, "tx_pulse_s": 4.0e-6, "pulse_width_3db_s": 4.0e-8},
+    {"nm": 4,  "dem_level_m": 5,  "prf_hz": 1800, "bandwidth_hz": 32e6, "tx_pulse_s": 8.0e-6, "pulse_width_3db_s": 5.0e-8},
+    {"nm": 7,  "dem_level_m": 10, "prf_hz": 1200, "bandwidth_hz": 20e6, "tx_pulse_s": 1.6e-5, "pulse_width_3db_s": 7.0e-8},
+    {"nm": 8,  "dem_level_m": 10, "prf_hz": 1100, "bandwidth_hz": 20e6, "tx_pulse_s": 1.6e-5, "pulse_width_3db_s": 7.0e-8},
+    {"nm": 10, "dem_level_m": 10, "prf_hz": 920,  "bandwidth_hz": 16e6, "tx_pulse_s": 2.2e-5, "pulse_width_3db_s": 9.0e-8}
+  ],
+  "_range_scales_assumed": "PRF/Bandbreite/Pulslaengen je Scale sind Annahmen innerhalb der Datenblattgrenzen",
+
+  "receiver": {
+    "stc_range_m": 1500,
+    "stc_exponent": 3,
+    "stc_max_db": 30,
+    "gain_db": 0,
+    "floor_db": 3,
+    "sat_db": 35
+  },
+
+  "speckle": {
+    "enable": true,
+    "sea_texture_shape": 1.5
+  },
+
+  "oversampling": {
+    "azimuth": 2,
+    "range": 2
+  },
+
+  "iq": {
+    "prf_hz": 920,
+    "clutter_resolution_factor": 0.5,
+    "use_beam": true,
+    "terrain_res_m": 10,
+    "max_pulses": 0,
+    "_max_pulses": "0 = volle Umdrehung; >0 = nur die ersten N Pulse (Test)"
+  }
+}

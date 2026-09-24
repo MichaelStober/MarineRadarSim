@@ -1,0 +1,42 @@
+{
+  "_comment": "Szene Rostock/Warnemuende, DOM1 LAiV-MV (ETRS89/UTM33, EPSG:25833, 1 m). Relative Pfade beziehen sich auf den MarineRadar-Ordner.",
+  "dom_dir": "C:\\Users\\michi\\Documents\\TEMP\\rostock_dom",
+  "dom_pattern": "dom1_(\\d+)_(\\d+)_(\\d+)_2_gtiff\\.tif",
+  "epsg": 25833,
+  "utm_zone": 33,
+  "tile_size_m": 2000,
+  "cache_dir": "cache",
+  "levels_m": [2, 5, 10],
+  "tile_cache_max": 150,
+
+  "missing_data": "sea",
+  "_missing_data": "'sea' = fehlende Kacheln als See (0 m); 'none' = kein Echo, keine Abschattung",
+  "water_level_m": 0.0,
+  "earth_k": 1.3333333,
+
+  "classification": {
+    "ground_window_m": 31,
+    "water_h_max_m": 0.3,
+    "water_rough_max_m": 0.15,
+    "object_min_h_m": 2.5,
+    "veg_rough_min_m": 0.8,
+    "rough_window_px": 3,
+    "veg_frac_window_px": 7,
+    "veg_frac_min": 0.3
+  },
+
+  "reflectivity": {
+    "sea_model": "NRL",
+    "sea_state": 2,
+    "land_model": "Nathanson",
+    "grazing_min_deg": 0.1,
+    "grazing_max_deg": 60,
+    "sea_gamma_db": -45,
+    "classes": [
+      {"id": 1, "name": "sea"},
+      {"id": 2, "name": "flat",  "land_type": "Farm",  "gamma_db": -18},
+      {"id": 3, "name": "woods", "land_type": "Woods", "gamma_db": -12},
+      {"id": 4, "name": "urban", "land_type": "Urban", "gamma_db": -6}
+    ]
+  }
+}

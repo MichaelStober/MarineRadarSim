@@ -59,6 +59,9 @@ Es gab in der Entwicklung keine MATLAB-Lizenz. Getestet wurde in GNU Octave 8.4 
 | UTM-Umrechnung, Meridiankonvergenz | gegen PROJ geprüft, Abweichung unter 1 mm |
 | DOM-Cache, Klassifikation mit DGM | in Octave getestet |
 | Punktziele (Tonnen) im Renderer | Selbsttest besteht |
+| Empfängerkette nach Quantum-Art, Kurzpuls (Option A, 2026-10-12) | Selbsttests bestehen; 3- und 8-NM-Läufe in Octave |
+| Seezeichen je Kategorie, Swerling 1, Mehrweg (Option B) | Selbsttests bestehen (Kategorien, Overpass-Umwandlung mit Form, F⁴ gegen Formel) |
+| Dihedral-Streuer aus DSM-Kanten (Option C) | Selbsttest an synthetischer Mauer; 3- und 8-NM-Läufe in Octave |
 | Kalibrier-Framework | in Octave getestet, Wiederfindungsexperiment siehe Abschnitt 5 |
 | NPZ-Leser, kanonisches Scan-Format, Spoke-Statistik, Dropout | in Octave getestet (synthetische Datei) |
 | Umrechnung kartesisch → polar | Rundlauf getestet |
@@ -73,6 +76,8 @@ Es gab in der Entwicklung keine MATLAB-Lizenz. Getestet wurde in GNU Octave 8.4 
 Folge für den ersten Lauf in MATLAB: Die Helligkeiten ändern sich gegenüber den Octave-Tests, weil dort die Toolbox-Modelle fehlten.
 
 ## 5. Wiederfindungsexperiment der Kalibrierung
+
+**Hinweis:** Die Tabelle stammt aus der Zeit vor dem neuen Empfängermodell (floor/sat/STC, bis 2026-10-12). Zum neuen Modell siehe den Nachtrag unten.
 
 `tests/runCalibrationRecovery.m` erzeugt vier pseudo-echte Scans (2 NM, vor Warnemünde) mit bekannten Parametern, anderer Speckle-Realisierung und zufällig fehlenden Spokes und kalibriert ab den Standardwerten. Ergebnis vom 2026-10-01 (Octave, Ersatz-Reflektivität, 60 Auswertungen je Stufe):
 
@@ -100,7 +105,7 @@ Zwei Dinge wurden dabei am Maß geändert, weil die erste Fassung versagte: glei
 
 ## 6. Bekannte Lücken zur Realität
 
-Siehe `docs/MODELL.md`, Abschnitt 7. Die wichtigsten für das Deskriptor-Training: Speckle ist nicht ortsfest, die Verarbeitungskette des Quantum ist nur grob nachgebildet, diskrete Streuer außer Tonnen fehlen.
+Siehe `docs/MODELL.md`, Abschnitt 7. Die wichtigsten für das Deskriptor-Training: Speckle ist nicht ortsfest; die Verarbeitungskette des Quantum ist seit 2026-10-12 strukturell nachgebildet, aber nicht kalibriert; Dihedral-Streuer an Wandkanten sind empirisch, Kräne/Masten/Schiffe fehlen. Hintergrund zur Helligkeit über die Entfernung: `docs/RECHERCHE_ENTFERNUNGSABFALL.md`.
 
 ## 7. Geplante Qualitätsstufen
 

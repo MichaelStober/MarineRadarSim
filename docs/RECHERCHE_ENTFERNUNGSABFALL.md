@@ -10,6 +10,8 @@ Gilt für das **Raymarine Quantum 2**. Andere Radare kommen erst später für Ve
 - **[Mike]**: Beobachtung von Mike an echten Quantum-2-Aufnahmen, noch nicht quantifiziert.
 - **[Hypothese]**: plausibel, aber nicht belegt. Vor der Umsetzung mit Mike klären.
 
+**Umsetzungsstand (2026-10-12):** Optionen A, B und C sind umgesetzt (Entscheidungen in `docs/ENTSCHEIDUNGEN.md`, Formeln in `docs/MODELL.md` Abschnitte 3–5). Die Werte sind weiterhin Annahmen; die Kalibrierung an echten Quantum-2-Scans steht aus. Kap. 4 beschreibt den Stand **vor** der Umsetzung.
+
 Regeln aus `AGENTS.md` gelten weiter: Gestaltungsentscheidungen trifft Mike. Kapitel 6 ist deshalb eine Entscheidungsvorlage, kein Auftrag.
 
 ---

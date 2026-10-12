@@ -32,11 +32,38 @@
   "earth_k": 1.3333333,
   "targets": {
     "file": "",
-    "_file": "Punktziele (Tonnen/Baken), z. B. mrsim.scene.downloadSeamarks([38.38 -9.25 38.50 -8.90], data/targets_portugal.csv)",
+    "_file": "Punktziele (Tonnen/Baken), z. B. mrsim.scene.downloadSeamarks([38.38 -9.25 38.50 -8.90], data/targets_portugal.csv) und hier eintragen; leer = keine",
+    "categories": {
+      "buoy_reflector": {"rcs_dbsm": 10, "height_m": 3.5},
+      "buoy":           {"rcs_dbsm": 7,  "height_m": 3.5},
+      "spar":           {"rcs_dbsm": 0,  "height_m": 1.0},
+      "beacon":         {"rcs_dbsm": 13, "height_m": 5.0}
+    },
+    "_categories": "Mittlerer RCS [dBsm] und Hoehe des Streuzentrums [m] je Kategorie (mrsim.scene.loadTargets). Tonnen nach IMO MSC.192(79) Tab. 2 (Tonne mit Reflektor 10 m^2 / 3,5 m; typische Tonne 5 m^2 / 3,5 m; 1-m-Tonne 1 m^2 / 1 m). Baken 13 dBsm / 5 m: Annahme",
+    "fluctuation": "swerling1",
+    "_fluctuation": "'swerling1' = RCS je Frame exponentialverteilt um den Mittelwert (Aspektschwankung); 'none' = konstant",
+    "multipath": {
+      "enable": true,
+      "reflection_coeff": -1,
+      "use_roughness": true
+    },
+    "_multipath": "Zweiwege-Mehrweg nur fuer Punktziele (mrsim.render.multipathFactor); Rauigkeit aus reflectivity.sea_state; Gamma = -1 (H-Pol., kleiner Grazingwinkel)",
     "rcs_reflector_dbsm": 10,
     "rcs_plain_dbsm": 0,
     "height_m": 3.0,
-    "_assumed": "wie Rostock, Annahme"
+    "_legacy": "rcs_reflector_dbsm/rcs_plain_dbsm/height_m nur, falls categories fehlt",
+    "_assumed": "RCS-/Hoehenwerte sind Annahmen (Entscheidung Mike 2026-10-12: IMO-basiert je Typ), Kalibrierung ueber class_offset_db(5)"
+  },
+
+  "scatterers": {
+    "enable": true,
+    "C_db": 8,
+    "n_exp": 4,
+    "quay_bonus_db": 6,
+    "min_wall_m": 2.5,
+    "max_wall_m": 30,
+    "_comment": "Dihedral-Streuer an Wandkanten im DSM (Option C, sceneResponse/findScatterers + sensorModel): sigma = 10^(C_db/10) * a * b * cos(dAlpha)^n_exp, Kaimauer (See davor) zusaetzlich +quay_bonus_db. a = Wandhoehe [m], b = Zellbreite r*dtheta [m].",
+    "_assumed": "C_db = 8 (5 m x 3 m Wand frontal ~ 20 dBsm), n_exp = 4, quay_bonus_db = 6, min_wall_m = 2,5 sind Annahmen; C_db, n_exp, quay_bonus_db werden kalibriert"
   },
   "classification": {
     "ground_window_m": 31,

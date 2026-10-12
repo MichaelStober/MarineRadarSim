@@ -7,9 +7,9 @@
   "_antenna_gain_db_assumed": "G ~ eta*41253/(4.9*20) mit eta~0.6 -> ~24 dBi (nicht veroeffentlicht)",
   "az_beamwidth_deg": 4.9,
   "el_beamwidth_deg": 20,
-  "sidelobe_db": -25,
+  "sidelobe_db": -45,
   "sidelobe_width_deg": 30,
-  "_sidelobe_assumed": "Nebenkeulen: breite Gauss-Komponente, Pegel/Breite geschaetzt",
+  "_sidelobe_assumed": "Nebenkeulen: breite Gauss-Komponente im Zweiwege-Leistungsdiagramm. Pegel -45 dB (Entscheidung Mike 2026-10-12, vorher -25 dB: deutliche Boegen um starke Echos) ~ -23 dB einwegig, typischer Richtwert fuer Marineradar-Antennen, fuer Quantum 2 nicht belegt; Breite geschaetzt",
   "polarization": "H",
   "rotation_rpm": 24,
   "noise_figure_db": 4,
@@ -38,12 +38,27 @@
   "_range_scales_assumed": "PRF/Bandbreite/Pulslaengen je Scale sind Annahmen innerhalb der Datenblattgrenzen",
 
   "receiver": {
-    "stc_range_m": 1500,
-    "stc_exponent": 3,
-    "stc_max_db": 30,
-    "gain_db": 0,
-    "floor_db": 3,
-    "sat_db": 35
+    "_comment": "Anzeigekette nach Quantum-Art (receiverChain.m, docs/MODELL.md). SNR bezogen auf mittleres Rauschen (0 dB). Ersetzt seit 2026-10-12 die alte Kette floor/sat/STC.",
+    "threshold_db": 2,
+    "_threshold_db": "Gain als Detektionsschwelle relativ zum Rauschen (Raymarine-Doku: 'Gain sets the detection threshold'); 2 dB -> Rauschen erscheint vereinzelt schwach",
+    "dynamic_range_db": 20,
+    "_dynamic_range_db": "Abstand Schwelle -> Weiss (Pixel 252); kleiner Wert = fruehe Saettigung",
+    "sea_max_db": 10,
+    "sea_range_m": 1000,
+    "sea_exponent": 2,
+    "_sea": "Sea-Clutter-Kurve: A(r) = min(sea_max_db, 10*sea_exponent*log10(sea_range_m/r)) fuer r < sea_range_m. Raymarine: maximale Daempfung bei r=0, wirkt bis zu 5 NM",
+    "range_gain_db_per_decade": 0,
+    "range_gain_r0_m": 1000,
+    "range_gain_max_db": 20,
+    "_range_gain": "Gain-Kurve G(r) = clip(slope*log10(r/r0), 0, max) (STC-Preset 'equalize targets across the image'). Default aus (slope 0): ohne echte Scans keine Grundlage fuer einen Wert",
+    "_assumed": "Alle Werte sind Annahmen (docs/RECHERCHE_ENTFERNUNGSABFALL.md, Kap. 3/6); Kalibrierung an echten Quantum-2-Scans steht aus"
+  },
+
+  "short_pulse": {
+    "enable": true,
+    "tx_pulse_s": 1e-6,
+    "_comment": "Nahbereich mit kurzem Puls statt langem Chirp (sensorModel.m). Unterhalb r_sp = c*tau_lang/2 (Sendezeit des langen Chirps = blinder Bereich) wird die Energie um 10*log10(tau_lang/tau_kurz) dB reduziert; nur wenn tau_lang > tau_kurz. Pro Range-Scale ueberschreibbar mit range_scales[].short_pulse_s.",
+    "_assumed": "HYPOTHESE: fuer das Quantum 2 nicht dokumentiert (Datenblatt nennt Pulse 40 ns-14,7 us und Chirps 400 ns-22 us). tx_pulse_s = 1 us ist geschaetzt."
   },
 
   "speckle": {

@@ -1,5 +1,5 @@
 function [radar, scene] = setParam(radar, scene, path, value)
-%SETPARAM  Parameter per Pfad setzen, z. B. 'radar.receiver.stc_max_db' oder
+%SETPARAM  Parameter per Pfad setzen, z. B. 'radar.receiver.sea_max_db' oder
 %   'scene.reflectivity.class_offset_db(2)'.
     [root, fields, idx] = parsePath(path);
     switch root

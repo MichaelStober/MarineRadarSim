@@ -6,13 +6,21 @@ function tg = loadTargets(csvPath, crs, defaults)
 %     height_m          Hoehe des Streuzentrums ueber Wasser [m]; leer -> Default
 %     reflector         1/0 (Radarreflektor vorhanden); leer -> 0
 %     type, name        frei (z. B. buoy_lateral, "Tonne 12")
-%   defaults (scene.targets): rcs_reflector_dbsm, rcs_plain_dbsm, height_m
+%     shape             Form (OSM seamark:<typ>:shape, z. B. spar, can, pillar); leer erlaubt
+%   defaults (scene.targets):
+%     categories.<kat>.rcs_dbsm / .height_m   Mittlerer RCS und Hoehe je Kategorie (Option B):
+%        beacon          type beginnt mit beacon_
+%        buoy_reflector  type beginnt mit buoy_ und reflector = 1
+%        spar            type beginnt mit buoy_, ohne Reflektor, shape = spar
+%        buoy            alle uebrigen (auch unbekannter Typ)
+%     Fehlt categories: rcs_reflector_dbsm, rcs_plain_dbsm, height_m (altes Schema).
+%   Explizite Werte in rcs_dbsm/height_m der CSV haben Vorrang.
 %   Rueckgabe: struct mit Spaltenvektoren E, N (Kartenkoordinaten der Szene), h, rcs (linear, m^2), type, name.
 %
 %   Erzeugen der CSV z. B. mit mrsim.scene.seamarksFromOverpass (OpenSeaMap/OSM) oder
 %   aus ENC-Objekten (S-57: BOYLAT, BOYCAR, BOYSAW, BOYSPP, BCNLAT, ...; Reflektor
 %   ueber Attribut CONRAD = 3 bzw. Objekt RADRFL).
-    tg = struct('E', [], 'N', [], 'h', [], 'rcs', [], 'type', {{}}, 'name', {{}});
+    tg = struct('E', [], 'N', [], 'h', [], 'rcs', [], 'type', {{}}, 'name', {{}}, 'category', {{}});
     if isempty(csvPath) || ~isfile(csvPath), return; end
     lines = regexp(fileread(csvPath), '\r?\n', 'split');
     lines = lines(~cellfun(@(s) isempty(strtrim(s)), lines));
@@ -33,14 +41,42 @@ function tg = loadTargets(csvPath, crs, defaults)
     end
     [tg.E, tg.N] = mrsim.geo.project(lat, lon, crs);              % crs: Szene oder UTM-Zone
     refl = num('reflector'); refl(isnan(refl)) = 0;
-    rcsDb = num('rcs_dbsm');
-    d = isnan(rcsDb);
-    rcsDb(d & refl > 0)  = defaults.rcs_reflector_dbsm;
-    rcsDb(d & refl == 0) = defaults.rcs_plain_dbsm;
-    tg.rcs = 10.^(rcsDb / 10);
-    tg.h = num('height_m'); tg.h(isnan(tg.h)) = defaults.height_m;
     tg.type = getStr(C, col('type'), n);
     tg.name = getStr(C, col('name'), n);
+    shape = getStr(C, col('shape'), n);
+    rcsDb = num('rcs_dbsm');
+    h = num('height_m');
+    if isfield(defaults, 'categories') && ~isempty(defaults.categories)
+        tg.category = cell(n, 1);
+        for i = 1:n
+            k = categorize(tg.type{i}, shape{i}, refl(i));
+            tg.category{i} = k;
+            cat = defaults.categories.(k);
+            if isnan(rcsDb(i)), rcsDb(i) = cat.rcs_dbsm; end
+            if isnan(h(i)), h(i) = cat.height_m; end
+        end
+    else
+        d = isnan(rcsDb);
+        rcsDb(d & refl > 0)  = defaults.rcs_reflector_dbsm;
+        rcsDb(d & refl == 0) = defaults.rcs_plain_dbsm;
+        h(isnan(h)) = defaults.height_m;
+        tg.category = repmat({''}, n, 1);
+    end
+    tg.rcs = 10.^(rcsDb / 10);
+    tg.h = h;
+end
+
+function k = categorize(type, shape, refl)
+    type = lower(strtrim(type)); shape = lower(strtrim(shape));
+    if strncmp(type, 'beacon_', 7)
+        k = 'beacon';
+    elseif refl > 0
+        k = 'buoy_reflector';
+    elseif strcmp(shape, 'spar')
+        k = 'spar';
+    else
+        k = 'buoy';
+    end
 end
 
 function v = getNum(C, i, n)

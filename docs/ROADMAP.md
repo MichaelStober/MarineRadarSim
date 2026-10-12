@@ -37,9 +37,10 @@ Jede Erweiterung einzeln einbauen und mit Abweichung und Rechenzeit gegen den St
 | # | Erweiterung | Stufe |
 |---|---|---|
 | 3.1 | Ortsfestes Speckle (offener Punkt 8) | Q1 |
-| 3.2 | Verarbeitungskette des Quantum, abhängig von den Einstellungen (offener Punkt 9) | Q1 |
-| 3.3 | Facetten- und Eckenstreuer (offener Punkt 10) | Q2 |
-| 3.4 | Mehrwegeausbreitung, Refraktion (offener Punkt 11) | Q2 |
+| 3.2 | Verarbeitungskette des Quantum, abhängig von den Einstellungen (offener Punkt 9) – **Struktur umgesetzt 2026-10-12 (Option A)**, Abhängigkeit von Settings und Kalibrierung offen | Q1 |
+| 3.3 | Facetten- und Eckenstreuer (offener Punkt 10) – **Wandkanten-Dihedrale umgesetzt 2026-10-12 (Option C)**, Kräne/Schiffe offen | Q2 |
+| 3.4 | Mehrwegeausbreitung, Refraktion (offener Punkt 11) – **Mehrweg für Punktziele umgesetzt 2026-10-12 (Option B)** | Q2 |
+| 3.4a | Ablation A/B/C: je Option an/aus gegen echte Scans (Abweichung D, Profile über die Entfernung) | Tabelle für die Arbeit |
 | 3.5 | Bewegung während der Umdrehung, Roll/Pitch | Q2 |
 | 3.6 | Vergleich Q0–Q3: Abweichung gegen Rechenzeit | Diagramm und Tabelle für die Arbeit |
 

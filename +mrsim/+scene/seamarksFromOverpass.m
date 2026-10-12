@@ -6,8 +6,9 @@ function n = seamarksFromOverpass(jsonFile, outCsv)
 %     [out:json]; node["seamark:type"~"^(buoy_|beacon_)"](54.05,11.90,54.35,12.40); out;
 %
 %   Uebernommen: lat, lon, type (seamark:type), name (seamark:name),
-%   reflector = 1, wenn seamark:radar_reflector = yes. rcs_dbsm und height_m bleiben
-%   leer -> Defaults aus scene.targets (Annahmen, siehe docs/ENTSCHEIDUNGEN.md).
+%   shape (seamark:<type>:shape), reflector = 1, wenn seamark:radar_reflector = yes.
+%   rcs_dbsm und height_m bleiben leer -> Kategorie-Defaults aus scene.targets.categories
+%   (Annahmen nach IMO MSC.192(79), siehe mrsim.scene.loadTargets, docs/ENTSCHEIDUNGEN.md).
 %   Rueckgabe: Anzahl geschriebener Ziele.
     d = jsondecode(fileread(jsonFile));
     el = d.elements;
@@ -15,7 +16,7 @@ function n = seamarksFromOverpass(jsonFile, outCsv)
     fid = fopen(outCsv, 'w');
     if fid < 0, error('mrsim:targets:write', 'Kann %s nicht schreiben.', outCsv); end
     c = onCleanup(@() fclose(fid));
-    fprintf(fid, 'lat,lon,rcs_dbsm,height_m,reflector,type,name\n');
+    fprintf(fid, 'lat,lon,rcs_dbsm,height_m,reflector,type,shape,name\n');
     n = 0;
     for i = 1:numel(el)
         e = el{i};
@@ -24,7 +25,8 @@ function n = seamarksFromOverpass(jsonFile, outCsv)
         if isempty(regexp(ty, '^(buoy_|beacon_)', 'once')), continue; end
         refl = strcmpi(tag(e.tags, 'seamark:radar_reflector'), 'yes');
         nm = strrep(tag(e.tags, 'seamark:name'), ',', ' ');
-        fprintf(fid, '%.7f,%.7f,,,%d,%s,%s\n', e.lat, e.lon, refl, ty, nm);
+        sh = strrep(tag(e.tags, ['seamark:' ty ':shape']), ',', ' ');
+        fprintf(fid, '%.7f,%.7f,,,%d,%s,%s,%s\n', e.lat, e.lon, refl, ty, sh, nm);
         n = n + 1;
     end
 end

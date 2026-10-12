@@ -12,7 +12,19 @@ function out = sensorModel(resp, radar, sc, scene)
 %     radar.range_res_scale               Faktor auf c*tau_3dB/2 (1)
 %     radar.azimuth_offset_deg            Montage-Offset Spoke 0 gegen Bug, im Uhrzeigersinn (0)
 %     radar.speckle.enable                kohaerent (Speckle) oder inkohaerent (Erwartungswert)
+%     scene.scatterers.C_db, n_exp, quay_bonus_db   Dihedral-Streuer (resp.scat, s. u.)
+%     radar.short_pulse.enable, tx_pulse_s           Kurzpuls im Nahbereich (s. u.)
 %   Ohne Speckle wird inkohaerent gerechnet: P = (h_az^2 (x) h_r^2) * (g_c * amp0^2).
+%
+%   Dihedral-Streuer (Option C, Kandidaten aus sceneResponse):
+%     sigma_d = 10^(C_db/10) * a*b * cos(dAlpha)^n_exp * (Kaimauer ? 10^(quay_bonus_db/10) : 1)
+%     q_d     = q1 * sigma_d   (q1 = Radargleichung je m^2 inkl. g_el^2, Pulskompression)
+%   kohaerent mit eigener Zufallsphase zur Feinzelle addiert. Billig variierbar -> Kalibrierung.
+%
+%   Kurzpuls im Nahbereich (Option A, HYPOTHESE fuer das Quantum 2):
+%     r < r_sp = c*tau_lang/2 :  P <- P * G_pc,kurz / G_pc,lang,   G_pc = max(1, tau*B)
+%   (waehrend des langen Chirps ist der Empfaenger taub; den Nahbereich deckt ein kurzer Puls ab).
+%   Die geaenderte Entfernungsaufloesung des kurzen Pulses ist nicht modelliert.
     ovA = resp.ovA; ovR = resp.ovR; nS = resp.nS; nB = resp.nB;
 
     off = getf(getf(scene, 'reflectivity', struct()), 'class_offset_db', [0 0 0 0]);
@@ -27,16 +39,24 @@ function out = sensorModel(resp, radar, sc, scene)
     resM = sc.res_m * getf(radar, 'range_res_scale', 1);
     [kr, kr2] = rgKernel(resM, resp.dr);
 
+    qd = scattererPower(resp, scene);                   % [] oder Spaltenvektor je Kandidat
     if radar.speckle.enable
         a = double(resp.amp0) .* sqrt(gcell) .* exp(1i * double(resp.phase));
+        if ~isempty(qd)
+            a(resp.scat.idx) = a(resp.scat.idx) + sqrt(qd) .* exp(1i * double(resp.scat.phase));
+        end
         if sh ~= 0, a = circshift(a, -sh, 1); end
         b = convSep(a, ka, kr);
         P = abs(b).^2;
     else
         p = double(resp.amp0).^2 .* gcell;
+        if ~isempty(qd)
+            p(resp.scat.idx) = p(resp.scat.idx) + qd;
+        end
         if sh ~= 0, p = circshift(p, -sh, 1); end
         P = convSep(p, ka2, kr2);
     end
+    P = shortPulse(P, resp, radar, sc);
     P = blockMean(P, ovA, ovR);
 
     nP = max(1, round(sc.pulses_per_spoke));
@@ -52,6 +72,33 @@ end
 % ---------------------------------------------------------------------------
 function v = getf(s, f, d)
     if isfield(s, f) && ~isempty(s.(f)), v = s.(f); else, v = d; end
+end
+
+function qd = scattererPower(resp, scene)
+% Dihedral-Streuer (Option C): Leistung je Kandidat aus den kalibrierbaren Parametern.
+    qd = [];
+    if ~isfield(resp, 'scat') || isempty(resp.scat.idx), return; end
+    sp = getf(scene, 'scatterers', struct());
+    if ~getf(sp, 'enable', false), return; end
+    C  = getf(sp, 'C_db', 8);
+    n  = getf(sp, 'n_exp', 4);
+    qb = getf(sp, 'quay_bonus_db', 6);
+    sig = 10^(C/10) * double(resp.scat.ab) .* double(resp.scat.cosA).^n;
+    sig(resp.scat.water) = sig(resp.scat.water) * 10^(qb/10);
+    qd = double(resp.scat.q1) .* sig;
+end
+
+function P = shortPulse(P, resp, radar, sc)
+% Kurzpuls im Nahbereich (Option A): Energie unterhalb r_sp = c*tau_lang/2 reduzieren.
+    sp = getf(radar, 'short_pulse', struct());
+    if ~getf(sp, 'enable', false), return; end
+    tauS = getf(sc, 'short_pulse_s', []);
+    if isempty(tauS), tauS = getf(sp, 'tx_pulse_s', 1e-6); end
+    if sc.tx_pulse_s <= tauS, return; end
+    rsp = 299792458 * sc.tx_pulse_s / 2;
+    fac = max(1, tauS * sc.bandwidth_hz) / sc.pc_gain;
+    near = resp.r < rsp;
+    P(:, near) = P(:, near) * fac;
 end
 
 function [ka, ka2] = azKernel(radar, dth, Na)

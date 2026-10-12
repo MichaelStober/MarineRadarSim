@@ -39,7 +39,8 @@ Neue Gebiete brauchen nur eine Szenendatei: `tile_scheme: "geotiff"` und das pas
 
 ```matlab
 mrsim.scene.downloadSeamarks([54.05 11.90 54.35 12.40], 'data/targets_rostock.csv')
-% danach in config/scene_rostock.json: "targets": { "file": "data/targets_rostock.csv", ... }
+% config/scene_rostock.json erwartet genau diese Datei ("targets.file"); RCS/Hoehe je Kategorie
+% (Tonne mit Reflektor, Tonne, Spiere, Bake) stehen in "targets.categories".
 ```
 
 ## CSV-Format

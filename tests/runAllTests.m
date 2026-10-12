@@ -6,7 +6,9 @@ function runAllTests()
     t = {@testUtmAgainstProj, @testConvergence, @testCsvReader, @testHeadingModes, ...
          @testRangeScale, @testPolarToCartOrientation, @testReceiverChain, ...
          @testFastWallAndShadow, @testFastHeadUpRotation, @testClassifyWithDgm, @testPointTarget, ...
-         @testAssembleRotation, @testSpokeStats, @testDiscrepancyZero, @testProjectionPtTm06, @testLoadRegionGeneric};
+         @testAssembleRotation, @testSpokeStats, @testDiscrepancyZero, @testProjectionPtTm06, @testLoadRegionGeneric, ...
+         @testReceiverChainMapping, @testShortPulse, @testMultipath, @testTargetCategories, ...
+         @testSeamarksShape, @testPointTargetMultipath, @testScatterers};
     nFail = 0;
     for i = 1:numel(t)
         name = func2str(t{i});
@@ -90,10 +92,146 @@ function testReceiverChain(root)
     assert(isa(pix, 'uint8') && max(pix(:)) == radar.pixel_max && min(pix(:)) == 0, 'Pixelbereich 0..252');
 end
 
+function testReceiverChainMapping(root)
+    % Schwelle -> 0, Schwelle + Fenster -> 252, linear dazwischen; Sea-Kurve nur im Nahbereich;
+    % Gain-Kurve G(r) ab r0.
+    radar = mrsim.config.loadJson(fullfile(root, 'config', 'quantum2.json'));
+    rc = radar.receiver;
+    rc.threshold_db = 2; rc.dynamic_range_db = 20;
+    rc.sea_max_db = 10; rc.sea_range_m = 1000; rc.sea_exponent = 2;
+    rc.range_gain_db_per_decade = 0; radar.receiver = rc;
+    binM = 10; nB = 1024; r = ((1:nB) - 0.5) * binM;
+    snr = repmat(single(12), 1, nB);
+    pix = double(mrsim.render.receiverChain(snr, binM, radar));
+    far = r > 1000;
+    assert(all(pix(far) == round(252 * 10 / 20)), 'Fernbereich: 12 dB muss Pixel 126 ergeben');
+    j = find(r > 500, 1);                                   % A_sea(500 m) = 20*log10(2) = 6.02 dB
+    assert(abs(pix(j) - 252 * (12 - 20*log10(1000/r(j)) - 2) / 20) <= 1, 'Sea-Kurve falsch');
+    assert(pix(1) == 0, 'Sea-Kurve muss ganz nah auf 0 druecken (12 - 10 < 2)');
+    rc.range_gain_db_per_decade = 10; rc.range_gain_r0_m = 1000; rc.range_gain_max_db = 5;
+    rc.sea_max_db = 0; radar.receiver = rc;
+    pix2 = double(mrsim.render.receiverChain(snr, binM, radar));
+    k = find(r > 10000 * 10^(-0.5) * 10^(0.5), 1);         % r >= 10 km -> G = min(10, 5) = 5 dB
+    assert(pix2(k) == round(252 * 15 / 20), 'Gain-Kurve: Begrenzung auf range_gain_max_db');
+    assert(pix2(50) == round(252 * 10 / 20), 'Gain-Kurve darf unterhalb r0 nicht wirken');
+end
+
+function testShortPulse(root)
+    % 8 NM: tau_lang 16 us, tau_kurz 1 us, B 20 MHz -> Nahbereich (r < 2,4 km) -10*log10(16) dB
+    radar = mrsim.config.loadJson(fullfile(root, 'config', 'quantum2.json'));
+    radar.speckle.enable = false; radar.oversampling.azimuth = 1; radar.oversampling.range = 1;
+    radar.short_pulse.enable = true; radar.short_pulse.tx_pulse_s = 1e-6;
+    sc = mrsim.config.getRangeScale(radar, 8);
+    nS = radar.n_spokes; nB = radar.n_bins;
+    resp.amp0 = ones(nS, nB, 'single') * 100; resp.phase = zeros(nS, nB, 'single');
+    resp.cls = ones(nS, nB, 'uint8'); resp.r = ((1:nB) - 0.5) * sc.bin_m;
+    resp.dtheta = 360 / nS; resp.dr = sc.bin_m; resp.nS = nS; resp.nB = nB;
+    resp.ovA = 1; resp.ovR = 1; resp.bin_m = sc.bin_m;
+    scene = struct();
+    out = mrsim.render.sensorModel(resp, radar, sc, scene);
+    jn = find(resp.r > 1500, 1); jf = find(resp.r > 3500, 1);
+    d = mean(out.snr_db(:, jf)) - mean(out.snr_db(:, jn));
+    assert(abs(d - 10*log10(16)) < 0.3, sprintf('Kurzpuls-Stufe %.2f dB statt 12,04 dB', d));
+    radar.short_pulse.enable = false;
+    out2 = mrsim.render.sensorModel(resp, radar, sc, scene);
+    assert(abs(mean(out2.snr_db(:, jf)) - mean(out2.snr_db(:, jn))) < 0.3, 'ohne Kurzpuls keine Stufe');
+end
+
+function testMultipath(~)
+    lam = 299792458 / 9.4e9; h1 = 3; h2 = 3.5;
+    r = [500 1000 2000 8000 16000];
+    F4 = mrsim.render.multipathFactor(h1, h2, r, lam, -1, 0);
+    ref = (2 * sin(2*pi*h1*h2 ./ (lam * r))).^4;
+    assert(max(abs(F4 - ref)) < 1e-9, 'glatte See: F^4 = (2 sin(2 pi h1 h2/(lambda r)))^4');
+    s = 10*log10(F4(5) / F4(4));                           % dB je Verdopplung weit draussen
+    assert(abs(s - (-12.04)) < 0.3, 'Fernbereich: F^4 ~ r^-4 (gesamt r^-8)');
+    F4r = mrsim.render.multipathFactor(h1, h2, 1000, lam, -1, 0.5);
+    assert(F4r < mrsim.render.multipathFactor(h1, h2, 1000, lam, -1, 0) && F4r > 0.2, 'Rauigkeit muss Interferenz daempfen');
+end
+
+function testTargetCategories(root)
+    scene = mrsim.config.loadJson(fullfile(root, 'config', 'scene_rostock.json'));
+    f = [tempname() '.csv'];
+    fid = fopen(f, 'w');
+    fprintf(fid, 'lat,lon,rcs_dbsm,height_m,reflector,type,shape,name\n');
+    fprintf(fid, '54.2,12.1,,,1,buoy_lateral,can,A\n');
+    fprintf(fid, '54.2,12.1,,,0,buoy_lateral,can,B\n');
+    fprintf(fid, '54.2,12.1,,,0,buoy_lateral,spar,C\n');
+    fprintf(fid, '54.2,12.1,,,0,beacon_lateral,,D\n');
+    fprintf(fid, '54.2,12.1,3,2,1,buoy_cardinal,pillar,E\n');
+    fclose(fid);
+    tg = mrsim.scene.loadTargets(f, 33, scene.targets);
+    delete(f);
+    assert(isequal(tg.category(:).', {'buoy_reflector', 'buoy', 'spar', 'beacon', 'buoy_reflector'}), 'Kategorien falsch');
+    assert(max(abs(10*log10(tg.rcs(:).') - [10 7 0 13 3])) < 1e-9, 'RCS je Kategorie falsch (oder CSV-Wert nicht vorrangig)');
+    assert(isequal(tg.h(:).', [3.5 3.5 1 5 2]), 'Hoehe je Kategorie falsch');
+end
+
+function testSeamarksShape(~)
+    d = tempname(); mkdir(d);
+    j = fullfile(d, 'op.json'); c = fullfile(d, 't.csv');
+    fid = fopen(j, 'w');
+    fprintf(fid, '{"elements":[{"type":"node","id":1,"lat":54.18,"lon":12.08,"tags":{"seamark:type":"buoy_lateral","seamark:buoy_lateral:shape":"spar","seamark:name":"12"}},');
+    fprintf(fid, '{"type":"node","id":2,"lat":54.19,"lon":12.09,"tags":{"seamark:type":"buoy_cardinal","seamark:radar_reflector":"yes"}},');
+    fprintf(fid, '{"type":"node","id":3,"lat":54.19,"lon":12.09,"tags":{"seamark:type":"light_minor"}}]}');
+    fclose(fid);
+    n = mrsim.scene.seamarksFromOverpass(j, c);
+    L = regexp(fileread(c), '\r?\n', 'split');
+    assert(n == 2, 'nur Tonnen/Baken uebernehmen');
+    assert(~isempty(strfind(L{2}, ',0,buoy_lateral,spar,12')), 'Form (shape) nicht uebernommen');
+    assert(~isempty(strfind(L{3}, ',1,buoy_cardinal,,')), 'Reflektor nicht uebernommen');
+end
+
+function testPointTargetMultipath(root)
+    % Tonne 6 km entfernt, h 3,5 m: mit Mehrweg (glatte See) deutlich schwaecher als ohne
+    [radar, scene, lut, sc] = synthSetup(root);
+    sc = mrsim.config.getRangeScale(radar, 4);
+    radar.short_pulse.enable = false;
+    reg.H = zeros(1500, 'single'); reg.C = ones(1500, 'uint8');
+    reg.x0 = -7500; reg.y0 = 7500; reg.res = 10; reg.missing_frac = 0;
+    scene.targets_data = struct('E', 6000, 'N', 0, 'h', 3.5, 'rcs', 10, 'type', {{''}}, 'name', {{''}});
+    pose = struct('E', 0, 'N', 0, 'gamma', 0, 'h_ant', 3, 'hdg0', 0);
+    scene.reflectivity.sea_state = 0;
+    scene.targets = struct('fluctuation', 'none', 'multipath', struct('enable', false));
+    r0 = mrsim.render.sceneResponse(reg, pose, radar, sc, scene, lut);
+    scene.targets.multipath = struct('enable', true, 'reflection_coeff', -1, 'use_roughness', true);
+    r1 = mrsim.render.sceneResponse(reg, pose, radar, sc, scene, lut);
+    k = find(r0.cls == 5);
+    dB = 20*log10(double(r1.amp0(k)) / double(r0.amp0(k)));
+    lam = 299792458 / radar.fc_hz;
+    ref = 10*log10((2*sin(2*pi*3*3.5/(lam*6000)))^4);
+    assert(numel(k) == 1 && abs(dB - ref) < 0.5, sprintf('Mehrweg am Punktziel %.1f dB statt %.1f dB', dB, ref));
+end
+
+function testScatterers(root)
+    % Mauer (synthRegion) frontal zum Radar, See davor -> Kandidaten mit cosA ~ 1 und Kaimauer-Flag;
+    % mit Streuern muss das Mauer-Echo staerker sein als ohne.
+    [radar, scene, lut, sc] = synthSetup(root);
+    reg = synthRegion();
+    pose = struct('E', 0, 'N', 0, 'gamma', 0, 'h_ant', 3, 'hdg0', 0);
+    scene.scatterers = struct('enable', false);
+    o0 = mrsim.render.ppiFast(reg, pose, radar, sc, scene, lut);
+    scene.scatterers = struct('enable', true, 'C_db', 8, 'n_exp', 4, 'quay_bonus_db', 6, ...
+                              'min_wall_m', 2.5, 'max_wall_m', 30);
+    o1 = mrsim.render.ppiFast(reg, pose, radar, sc, scene, lut);
+    s = o1.resp.scat;
+    assert(~isempty(s.idx), 'keine Dihedral-Kandidaten an der Mauer');
+    [ii, jj] = ind2sub(size(o1.resp.amp0), s.idx);
+    th = ((ii - 1) - (radar.oversampling.azimuth - 1) / 2) * o1.resp.dtheta;   % Azimut ab Nord
+    yy = o1.resp.r(jj(:)).' .* cosd(th(:));                                     % Nordkoordinate
+    assert(all(abs(yy - 1000) < 12), 'Kandidaten nicht an der Mauerfront (y = 1000 m)');
+    assert(median(double(s.cosA)) > 0.95, 'Mauer frontal -> cos(dAlpha) ~ 1');
+    assert(all(s.water), 'See vor der Mauer -> Kaimauer-Flag');
+    b = round(1000 / sc.bin_m) + 1;
+    d = max(o1.snr_db(1, b-3:b+3)) - max(o0.snr_db(1, b-3:b+3));
+    assert(d > 3, sprintf('Streuer erhoehen das Mauer-Echo nur um %.1f dB', d));
+    assert(isempty(o0.resp.scat.idx), 'enable=false darf keine Kandidaten liefern');
+end
+
 function [radar, scene, lut, sc] = synthSetup(root)
     radar = mrsim.config.loadJson(fullfile(root, 'config', 'quantum2.json'));
     radar.speckle.enable = false;
-    radar.receiver.stc_max_db = 0;
+    radar.receiver.sea_max_db = 0;
     scene.missing_data = 'sea'; scene.water_level_m = 0; scene.earth_k = 4/3;
     rc.sea_state = 3; rc.sea_model = 'NRL'; rc.land_model = 'none-for-test';
     rc.grazing_min_deg = 0.1; rc.grazing_max_deg = 60; rc.sea_gamma_db = -45;

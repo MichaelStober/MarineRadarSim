@@ -1,31 +1,41 @@
 {
   "_comment": "Kalibrierung (Systemidentifikation) der Simulation an echten Scans. Stufen werden nacheinander optimiert; 'geometry' = Azimut-Offset per Kreuzkorrelation (kein Optimierer).",
 
-  "stages": ["geometry", "radiometry", "psf", "texture", "joint"],
-  "_stages": "'joint' = gemeinsame Nachoptimierung aller Parameter aus radiometry/psf/texture (optional, entfernen fuer schnellere Laeufe)",
+  "stages": ["geometry", "radiometry", "range", "scatterers", "psf", "texture", "joint"],
+  "_stages": "'range' = Gain-Kurve G(r) und Kurzpuls (braucht Scans mehrerer Range-Scales bzw. Ziele ueber den ganzen Bereich); 'scatterers' = Punktziel-Offset und Dihedral-Streuer; 'joint' = gemeinsame Nachoptimierung aller Parameter ausser geometry (optional, entfernen fuer schnellere Laeufe)",
 
   "params": [
     {"name": "sea_offset_db",    "path": "scene.reflectivity.class_offset_db(1)", "lb": -25, "ub": 25, "stage": "radiometry"},
     {"name": "flat_offset_db",   "path": "scene.reflectivity.class_offset_db(2)", "lb": -25, "ub": 25, "stage": "radiometry"},
     {"name": "woods_offset_db",  "path": "scene.reflectivity.class_offset_db(3)", "lb": -25, "ub": 25, "stage": "radiometry"},
     {"name": "urban_offset_db",  "path": "scene.reflectivity.class_offset_db(4)", "lb": -25, "ub": 25, "stage": "radiometry"},
-    {"name": "floor_db",         "path": "radar.receiver.floor_db",               "lb": -5,  "ub": 25, "stage": "radiometry"},
-    {"name": "sat_db",           "path": "radar.receiver.sat_db",                 "lb": 15,  "ub": 80, "stage": "radiometry"},
-    {"name": "stc_max_db",       "path": "radar.receiver.stc_max_db",             "lb": 0,   "ub": 60, "stage": "radiometry"},
-    {"name": "stc_exponent",     "path": "radar.receiver.stc_exponent",           "lb": 1,   "ub": 5,  "stage": "radiometry"},
-    {"name": "stc_range_m",      "path": "radar.receiver.stc_range_m",            "lb": 100, "ub": 4000, "stage": "radiometry"},
+    {"name": "threshold_db",     "path": "radar.receiver.threshold_db",           "lb": -5,  "ub": 15, "stage": "radiometry"},
+    {"name": "dynamic_range_db", "path": "radar.receiver.dynamic_range_db",       "lb": 5,   "ub": 50, "stage": "radiometry"},
+    {"name": "sea_max_db",       "path": "radar.receiver.sea_max_db",             "lb": 0,   "ub": 40, "stage": "radiometry"},
+    {"name": "sea_range_m",      "path": "radar.receiver.sea_range_m",            "lb": 100, "ub": 9000, "stage": "radiometry"},
+    {"name": "sea_exponent",     "path": "radar.receiver.sea_exponent",           "lb": 0.5, "ub": 5,  "stage": "radiometry"},
+    {"name": "range_gain_slope", "path": "radar.receiver.range_gain_db_per_decade", "lb": 0, "ub": 30, "stage": "range"},
+    {"name": "range_gain_r0_m",  "path": "radar.receiver.range_gain_r0_m",        "lb": 100, "ub": 10000, "stage": "range"},
+    {"name": "range_gain_max",   "path": "radar.receiver.range_gain_max_db",      "lb": 0,   "ub": 30, "stage": "range"},
+    {"name": "short_pulse_s",    "path": "radar.short_pulse.tx_pulse_s",          "lb": 2e-7, "ub": 1e-5, "stage": "range"},
+    {"name": "target_offset_db", "path": "scene.reflectivity.class_offset_db(5)", "lb": -20, "ub": 20, "stage": "scatterers"},
+    {"name": "scatterer_C_db",   "path": "scene.scatterers.C_db",                 "lb": -20, "ub": 30, "stage": "scatterers"},
+    {"name": "scatterer_n_exp",  "path": "scene.scatterers.n_exp",                "lb": 0,   "ub": 20, "stage": "scatterers"},
+    {"name": "quay_bonus_db",    "path": "scene.scatterers.quay_bonus_db",        "lb": 0,   "ub": 20, "stage": "scatterers"},
     {"name": "az_beamwidth_deg", "path": "radar.az_beamwidth_deg",                "lb": 3.0, "ub": 8.0, "stage": "psf"},
-    {"name": "sidelobe_db",      "path": "radar.sidelobe_db",                     "lb": -45, "ub": -12, "stage": "psf"},
+    {"name": "sidelobe_db",      "path": "radar.sidelobe_db",                     "lb": -60, "ub": -20, "stage": "psf"},
     {"name": "sidelobe_width",   "path": "radar.sidelobe_width_deg",              "lb": 8,   "ub": 60, "stage": "psf"},
     {"name": "range_res_scale",  "path": "radar.range_res_scale",                 "lb": 0.5, "ub": 4,  "stage": "psf"},
     {"name": "sea_texture_nu",   "path": "radar.speckle.sea_texture_shape",       "lb": 0.3, "ub": 20, "stage": "texture"}
   ],
-  "_params_note": "radar.receiver.gain_db bleibt fest: gegen die Klassen-Offsets nicht identifizierbar (gleiche Wirkung). Absolutpegel steckt damit in den Offsets.",
+  "_params_note": "Absolutpegel: threshold_db und die Klassen-Offsets sind teilweise gekoppelt (Rauschen legt threshold_db fest, Echos die Offsets). sea_max_db/sea_range_m und der See-Offset sind gekoppelt (siehe Recovery-Experiment). Kurzpuls: short_pulse_s wirkt nur bei Scales mit tau_lang > short_pulse_s.",
 
   "geometry": {
     "estimate_azimuth_offset": true,
     "max_offset_deg": 15,
-    "descriptor_min_range_m": 50
+    "descriptor_min_range_m": 50,
+    "descriptor_min_px": 60,
+    "_descriptor_min_px": "Pixel unter dieser Schwelle zaehlen im Azimut-Deskriptor als 0 (blendet den Rauschsockel der neuen Empfaengerkette aus; 60 ~ 5 dB ueber der Gain-Schwelle bei 20 dB Fenster)"
   },
 
   "metric": {

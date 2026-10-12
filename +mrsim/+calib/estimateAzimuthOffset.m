@@ -1,8 +1,11 @@
 function [offDeg, perScan] = estimateAzimuthOffset(cache, radar, scene, cfg)
 %ESTIMATEAZIMUTHOFFSET  Montage-Offset der Antenne (Spoke 0 gegen Bug) per Kreuzkorrelation.
 %
-%   Deskriptor je Spoke (wie LodeStar, Jang et al. 2024): d(k) = mean_r log(1 + I(k,r)),
-%   r >= descriptor_min_range_m, mittelwertfrei und normiert, nur gueltige Spokes.
+%   Deskriptor je Spoke (wie LodeStar, Jang et al. 2024): d(k) = mean_r log(1 + I'(k,r)),
+%   I' = I * (I >= descriptor_min_px), r >= descriptor_min_range_m, mittelwertfrei und
+%   normiert, nur gueltige Spokes. Die Pixelschwelle blendet den sichtbaren Rauschsockel
+%   aus (seit der Empfaengerkette nach Quantum-Art, 2026-10-12); sonst verwaescht das
+%   Rauschen ueber alle Bins die Landstruktur im Deskriptor.
 %   rho(s) = sum_{k gueltig} d_real(k) * d_sim(k + s) / |gueltig|,  s = -S..S
 %   s* = argmax rho, parabolisch verfeinert; Offset = s* * 360/n_spokes.
 %   Gesamtwert = Maximum der ueber alle Scans SUMMIERTEN Korrelation (Scans mit
@@ -13,14 +16,16 @@ function [offDeg, perScan] = estimateAzimuthOffset(cache, radar, scene, cfg)
     radar.azimuth_offset_deg = 0;
     S = round(cfg.geometry.max_offset_deg / (360 / nS));
     perScan = zeros(1, numel(cache));
+    pMin = 0;
+    if isfield(cfg.geometry, 'descriptor_min_px'), pMin = cfg.geometry.descriptor_min_px; end
     rhoSum = zeros(2*S + 1, 1);
     for k = 1:numel(cache)
         e = cache{k};
         sim = mrsim.calib.renderCached(e, radar, scene, cfg.optimizer.seed);
         j0 = max(1, ceil(cfg.geometry.descriptor_min_range_m / e.sc.bin_m));
         v = e.scan.valid;
-        dr = mean(log1p(double(e.scan.pix(:, j0:end))), 2);
-        ds = mean(log1p(double(sim(:, j0:end))), 2);
+        dr = descr(e.scan.pix(:, j0:end), pMin);
+        ds = descr(sim(:, j0:end), pMin);
         dr = norm0(dr, v); ds = norm0(ds, true(nS, 1));
         rho = zeros(2*S + 1, 1);
         for s = -S:S
@@ -48,4 +53,10 @@ function d = norm0(d, v)
     if sd == 0, sd = 1; end
     d = (d - mu) / sd;
     d(~v) = 0;
+end
+
+function d = descr(I, pMin)
+    I = double(I);
+    I(I < pMin) = 0;
+    d = mean(log1p(I), 2);
 end

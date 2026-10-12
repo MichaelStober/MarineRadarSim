@@ -11,11 +11,16 @@ function sc = getRangeScale(radar, rangeNm)
     if iscell(scales), scales = [scales{:}]; end
     idx = find([scales.nm] == rangeNm, 1);
     if isempty(idx)
-        error('mrsim:config:rangeScale', ...
-            'Range-Scale %g NM nicht in quantum2.json definiert (verfuegbar: %s NM).', ...
-            rangeNm, mat2str([scales.nm]));
+        % z. B. echte Aufnahme mit 1.5 NM: Pulsparameter der naechstgelegenen Scale,
+        % Geometrie mit der tatsaechlichen Range.
+        [~, idx] = min(abs([scales.nm] - rangeNm));
+        warning('mrsim:config:rangeScaleNearest', ...
+            'Range-Scale %g NM nicht definiert -> Pulsparameter von %g NM verwendet.', rangeNm, scales(idx).nm);
+        sc = scales(idx);
+        sc.nm = rangeNm;
+    else
+        sc = scales(idx);
     end
-    sc = scales(idx);
     c = 299792458;
     sc.range_m = rangeNm * 1852;
     sc.bin_m   = sc.range_m * radar.bin_range_factor / radar.n_bins;

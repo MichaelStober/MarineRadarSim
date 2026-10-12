@@ -30,7 +30,7 @@ function lut = buildReflectivityTable(rcfg, fc)
         id = c.id;
         s = [];
         if strcmpi(c.name, 'sea')
-            if exist('seareflectivity', 'file') == 2
+            if exist('seareflectivity') ~= 0
                 try
                     s = seareflectivity(rcfg.sea_state, psiValid(:), fc, ...
                         'Polarization', 'H', 'Model', rcfg.sea_model);
@@ -42,7 +42,7 @@ function lut = buildReflectivityTable(rcfg, fc)
             end
             gdb = rcfg.sea_gamma_db;
         else
-            if exist('landreflectivity', 'file') == 2
+            if exist('landreflectivity') ~= 0
                 try
                     s = landreflectivity(c.land_type, psiValid(:), fc, 'Model', rcfg.land_model);
                     lut.source{id+1} = sprintf('landreflectivity %s %s', rcfg.land_model, c.land_type);

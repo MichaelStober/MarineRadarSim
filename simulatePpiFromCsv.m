@@ -51,25 +51,21 @@ function index = simulatePpiFromCsv(csvPath, outDir, varargin)
 
     % ---------- Konfiguration --------------------------------------------------
     radar = mrsim.config.loadJson(char(o.Radar));
-    scene = mrsim.config.loadJson(char(o.Scene));
-    scene.cache_dir = mrsim.config.resolvePath(scene.cache_dir, root);
-    scene.dom_dir   = mrsim.config.resolvePath(scene.dom_dir, root);
+    scene = mrsim.config.loadScene(char(o.Scene), root);   % inkl. config/local.json
     sc = mrsim.config.getRangeScale(radar, o.RangeScaleNM);
     level = sc.dem_level_m;
     fprintf('Range %g NM: Radius %.0f m, Bin %.2f m, Aufloesung %.1f m, DOM-Stufe %g m, %.1f Pulse/Spoke\n', ...
         sc.nm, sc.range_m, sc.bin_m, sc.res_m, level, sc.pulses_per_spoke);
 
     % ---------- DOM-Cache -------------------------------------------------------
-    cacheLevelDir = fullfile(scene.cache_dir, sprintf('L%gm', level));
-    if o.BuildCache && (~isfolder(cacheLevelDir) || isempty(dir(fullfile(cacheLevelDir, 't_*.mat'))))
-        fprintf('DOM-Cache fuer %g m fehlt -> wird aus %s gebaut (einmalig) ...\n', level, scene.dom_dir);
+    if o.BuildCache                                  % baut nur Fehlendes/Veraltetes
         mrsim.dem.buildTileCache(scene);
     end
 
     % ---------- Trajektorie & Heading ------------------------------------------
     trk = mrsim.geo.readTrajectoryCsv(csvPath);
-    [E, N] = mrsim.geo.wgs2utm(trk.lat, trk.lon, scene.utm_zone);
-    gam = mrsim.geo.gridConvergence(trk.lat, trk.lon, scene.utm_zone);
+    [E, N] = mrsim.geo.project(trk.lat, trk.lon, scene);          % Koordinatensystem der Szene
+    gam = mrsim.geo.gridConvergence(trk.lat, trk.lon, scene);
     hAnt = trk.antenna_height; hAnt(isnan(hAnt)) = radar.antenna_height_m;
     [hdg, headUp, hsrc] = mrsim.geo.resolveHeading(trk, E, N, gam, char(o.HeadingMode), o.HeadingDeg);
 

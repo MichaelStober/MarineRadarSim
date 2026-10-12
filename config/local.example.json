@@ -1,0 +1,10 @@
+{
+  "_comment": "Nur noetig, wenn DOM/DGM NICHT in <repo>/rostock_dom bzw. <repo>/rostock_dem liegen: Kopie als config/local.json anlegen (wird NICHT eingecheckt). Schluessel = Szenendatei ohne .json. Pfade absolut oder relativ zum Repo.",
+  "scene_rostock": {
+    "dom_dir": "/home/USER/data/rostock_dom",
+    "dgm_dir": "/home/USER/data/rostock_dem"
+  },
+  "scene_portugal": {
+    "dom_dir": "/home/USER/data/Portugal_DSM_50cm"
+  }
+}

@@ -1,0 +1,92 @@
+{
+  "_comment": "Szene Portugal (Sesimbra/Arrabida): DGT Modelo Digital de Superficie (MDS) 50 cm, 2024, EPSG:3763 (ETRS89/PT-TM06), Kacheln 1 x 1 km mit Georeferenz und NoData -999 im Dateikopf. Relative Pfade beziehen sich auf den Repo-Ordner; abweichende Pfade in config/local.json unter dem Schluessel 'scene_portugal'.",
+  "tile_scheme": "geotiff",
+  "_tile_scheme": "'geotiff' = Lage/Groesse/Aufloesung aus dem Dateikopf (mrsim.dem.buildTileCacheGeneric); 'mv_named' = DOM1 MV ueber Dateinamen",
+  "dom_dir": "portugal_dsm",
+  "dom_glob": "MDS-50cm-*.tif",
+  "dgm_dir": "",
+  "_dgm_dir": "Kein DGM vorhanden -> Objekthoehe per morphologischer Oeffnung aus dem DSM geschaetzt",
+  "crs": {
+    "type": "tm",
+    "epsg": 3763,
+    "lat0": 39.66825833333333,
+    "lon0": -8.133108333333332,
+    "k0": 1.0,
+    "false_easting": 0,
+    "false_northing": 0,
+    "_source": "PROJ: +proj=tmerc +lat_0=39.6682583333333 +lon_0=-8.13310833333333 +k=1 +x_0=0 +y_0=0 +ellps=GRS80"
+  },
+  "cache_dir": "cache/portugal",
+  "levels_m": [
+    2,
+    5,
+    10
+  ],
+  "tile_cache_max": 200,
+  "nodata_below_m": -100,
+  "_nodata": "Werte < nodata_below_m oder = NoData aus dem Dateikopf (-999) gelten als fehlend",
+  "missing_data": "sea",
+  "_missing_data": "Fehlende Bereiche (ausserhalb der Befliegung) liegen hier ueberwiegend auf See -> 'sea'; landseitige Luecken wuerden faelschlich als See gerechnet (Annahme)",
+  "water_level_m": 0.0,
+  "_water_level_m": "Hoehen vermutlich orthometrisch (Datum Cascais; im DGT-Metadatensatz pruefen), Wasser im DSM = 0 m. Deutlicher Tidenhub an der Atlantikkueste -> fuer echte Scans Pegel zum Aufnahmezeitpunkt eintragen (Annahme/offen)",
+  "earth_k": 1.3333333,
+  "targets": {
+    "file": "",
+    "_file": "Punktziele (Tonnen/Baken), z. B. mrsim.scene.downloadSeamarks([38.38 -9.25 38.50 -8.90], data/targets_portugal.csv)",
+    "rcs_reflector_dbsm": 10,
+    "rcs_plain_dbsm": 0,
+    "height_m": 3.0,
+    "_assumed": "wie Rostock, Annahme"
+  },
+  "classification": {
+    "ground_window_m": 31,
+    "water_h_max_m": 0.3,
+    "water_rough_max_m": 0.15,
+    "object_min_h_m": 2.5,
+    "rough_window_px": 3,
+    "edge_px": 2,
+    "roof_curv_max_m": 0.3,
+    "roof_window_px": 5,
+    "roof_frac_min": 0.6
+  },
+  "reflectivity": {
+    "sea_model": "NRL",
+    "sea_state": 3,
+    "land_model": "Nathanson",
+    "grazing_min_deg": 0.1,
+    "grazing_max_deg": 60,
+    "sea_gamma_db": -45,
+    "class_offset_db": [
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    "_class_offset_db": "dB-Offset auf sigma0 je Klasse [See flach Wald Bebauung Punktziel]; Kalibrierparameter, wirkt im Sensormodell",
+    "classes": [
+      {
+        "id": 1,
+        "name": "sea"
+      },
+      {
+        "id": 2,
+        "name": "flat",
+        "land_type": "Farm",
+        "gamma_db": -18
+      },
+      {
+        "id": 3,
+        "name": "woods",
+        "land_type": "Woods",
+        "gamma_db": -12
+      },
+      {
+        "id": 4,
+        "name": "urban",
+        "land_type": "Urban",
+        "gamma_db": -6
+      }
+    ]
+  }
+}

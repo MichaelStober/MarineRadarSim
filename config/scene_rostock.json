@@ -1,7 +1,9 @@
 {
-  "_comment": "Szene Rostock/Warnemuende, DOM1 LAiV-MV (ETRS89/UTM33, EPSG:25833, 1 m). Relative Pfade beziehen sich auf den MarineRadar-Ordner.",
-  "dom_dir": "C:\\Users\\michi\\Documents\\TEMP\\rostock_dom",
+  "_comment": "Szene Rostock/Warnemuende, DOM1 LAiV-MV (ETRS89/UTM33, EPSG:25833, 1 m). Relative Pfade beziehen sich auf den Repo-Ordner; maschinenspezifische Pfade in config/local.json ueberschreiben (siehe local.example.json).",
+  "dom_dir": "rostock_dom",
   "dom_pattern": "dom1_(\\d+)_(\\d+)_(\\d+)_2_gtiff\\.tif",
+  "dgm_dir": "rostock_dem",
+  "dgm_pattern": "dgm1_(\\d+)_(\\d+)_(\\d+)_2_gtiff\\.tif",
   "epsg": 25833,
   "utm_zone": 33,
   "tile_size_m": 2000,
@@ -14,24 +16,36 @@
   "water_level_m": 0.0,
   "earth_k": 1.3333333,
 
+  "targets": {
+    "file": "",
+    "_file": "CSV mit Punktzielen (Tonnen, Baken) aus ENC/OSM, siehe mrsim.scene.loadTargets und mrsim.scene.seamarksFromOverpass; leer = keine",
+    "rcs_reflector_dbsm": 10,
+    "rcs_plain_dbsm": 0,
+    "height_m": 3.0,
+    "_assumed": "RCS-/Hoehen-Defaults sind Annahmen (Entscheidung offen, siehe docs/ENTSCHEIDUNGEN.md)"
+  },
+
   "classification": {
     "ground_window_m": 31,
     "water_h_max_m": 0.3,
     "water_rough_max_m": 0.15,
     "object_min_h_m": 2.5,
-    "veg_rough_min_m": 0.8,
     "rough_window_px": 3,
-    "veg_frac_window_px": 7,
-    "veg_frac_min": 0.3
+    "edge_px": 2,
+    "roof_curv_max_m": 0.3,
+    "roof_window_px": 5,
+    "roof_frac_min": 0.6
   },
 
   "reflectivity": {
     "sea_model": "NRL",
-    "sea_state": 2,
+    "sea_state": 3,
     "land_model": "Nathanson",
     "grazing_min_deg": 0.1,
     "grazing_max_deg": 60,
     "sea_gamma_db": -45,
+    "class_offset_db": [0, 0, 0, 0, 0],
+    "_class_offset_db": "dB-Offset auf sigma0 je Klasse [See flach Wald Bebauung Punktziel]; Kalibrierparameter, wirkt im Sensormodell",
     "classes": [
       {"id": 1, "name": "sea"},
       {"id": 2, "name": "flat",  "land_type": "Farm",  "gamma_db": -18},

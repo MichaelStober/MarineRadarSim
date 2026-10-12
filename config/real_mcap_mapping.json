@@ -1,0 +1,40 @@
+{
+  "_comment": "Zuordnung ROS-2-Topics/Felder -> kanonischer Scan. Werte mit TODO nach mrsim.real.inspectMcap(...) ausfuellen. Feldpfade mit Punkt, z. B. 'header.stamp.sec'.",
+  "env": "TODO_rostock_offshore",
+
+  "spoke_topic": "TODO_/radar/spokes",
+  "spoke_angle_field": "TODO_angle",
+  "angle_units_per_rev": 4096,
+  "_angle_units_per_rev": "Wertebereich des Winkelfelds je Umdrehung (z. B. 2048, 4096 oder 360 bei Grad)",
+  "angle_reference": "bow",
+  "_angle_reference": "'bow' = Winkel relativ zum Bug (Head-up), 'north' = geographisch",
+  "spoke_data_field": "TODO_data",
+  "spoke_range_field": "TODO_range",
+  "_spoke_range_field": "Laenge des Spokes in Metern; leer lassen, wenn die Range aus den Settings kommt",
+  "rotation_period_s": 2.5,
+
+  "gnss_topic": "TODO_/gnss/fix",
+  "lat_field": "latitude",
+  "lon_field": "longitude",
+
+  "heading_topic": "TODO_/heading",
+  "heading_field": "TODO_heading",
+  "heading_units": "deg",
+  "_heading_units": "'deg' | 'rad' | 'enu_yaw_rad' (ROS-Yaw ENU, wird in geogr. Heading umgerechnet)",
+
+  "settings_topic": "TODO_/radar/settings",
+  "settings_fields": {
+    "range_m": "TODO_range",
+    "mode": "TODO_mode",
+    "gain_auto": "TODO_gain_auto",
+    "gain": "TODO_gain",
+    "sea_auto": "TODO_sea_auto",
+    "sea": "TODO_sea",
+    "sea_curve": "TODO_sea_curve",
+    "rain": "TODO_rain",
+    "interference_rejection": "TODO_ir",
+    "target_expansion": "TODO_te"
+  },
+
+  "antenna_height_m": 3.0
+}

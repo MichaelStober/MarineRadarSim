@@ -4,7 +4,7 @@ function Z = readDomTile(tifPath)
 %   Die Dateien enthalten KEINE CRS-GeoKeys -> Georeferenz kommt aus dem
 %   Dateinamen (mrsim.dem.parseTileName), nicht aus readgeoraster.
     Z = [];
-    if exist('readgeoraster', 'file') == 2
+    if exist('readgeoraster') ~= 0
         try
             Z = readgeoraster(tifPath, 'OutputType', 'single');
         catch

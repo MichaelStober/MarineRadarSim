@@ -5,6 +5,10 @@ function reg = loadRegion(scene, level, E, N, radius)
 %   reg.x0    Westkante [m E], reg.y0 Nordkante [m N], reg.res Zellgroesse [m]
 %   reg.missing_frac  Anteil fehlender Zellen (vor Ersetzung)
 %   Zelle (r,c) hat ihr Zentrum bei E = x0 + (c-0.5)*res, N = y0 - (r-0.5)*res.
+    if isfield(scene, 'tile_scheme') && strcmpi(scene.tile_scheme, 'geotiff')
+        reg = mrsim.dem.loadRegionGeneric(scene, level, E, N, radius);
+        return;
+    end
     T  = scene.tile_size_m;
     tk = T / 1000;
     nT = T / level;

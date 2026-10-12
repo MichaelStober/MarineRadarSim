@@ -1,0 +1,33 @@
+{
+  "_comment": "Zuordnung der Schluessel in Mikes .npz-Aufnahmen -> kanonischer Scan. TODO-Werte nach mrsim.real.inspectNpz(datei) ausfuellen. Leerer String = nicht vorhanden.",
+  "env": "TODO_rostock_offshore",
+
+  "spokes_key": "TODO_spokes",
+  "_spokes_key": "Array n_spokes x n_bins (2048 x 1024) oder n_scans x n_spokes x n_bins",
+
+  "missing_rule": "zero_rows",
+  "_missing_rule": "'valid_key' = eigene Maske im Archiv; 'zero_rows' = Spokes mit ausschliesslich 0 gelten als fehlend; 'none' = alle gueltig. OFFEN: mit Mike klaeren, wie fehlende Spokes im NPZ kodiert sind.",
+  "valid_key": "",
+
+  "lat_key": "",
+  "lon_key": "",
+  "heading_key": "",
+  "heading_units": "deg",
+  "time_key": "",
+  "range_m_key": "",
+  "range_nm_default": null,
+  "_range_nm_default": "nur verwendet, wenn range_m_key leer ist",
+
+  "gps_csv": {
+    "file": "",
+    "time_col": "time",
+    "lat_col": "lat",
+    "lon_col": "lon",
+    "heading_col": ""
+  },
+  "_gps_csv": "Position aus separater CSV (naechster Zeitstempel zu time_key), falls lat/lon nicht im Archiv stehen",
+
+  "orientation": "head-up",
+  "antenna_height_m": 3.0,
+  "settings": {}
+}

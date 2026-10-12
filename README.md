@@ -5,14 +5,42 @@ Simuliert Raymarine-Quantum-2-Radarbilder (2048 Spokes × 1024 Bins, Werte 0–2
 ## Schnellstart
 
 ```matlab
-cd path\to\MarineRadar
-addpath tests; runAllTests                 % Selbsttest (ohne DOM, ~20 s)
+% DOM-Kacheln nach <repo>/rostock_dom, DGM (optional) nach <repo>/rostock_dem legen;
+% liegen sie woanders: config/local.example.json nach config/local.json kopieren, Pfade eintragen
+addpath tests; runAllTests                 % 16 Selbsttests, ohne Daten, ~30 s
 simulatePpiFromCsv('examples/track_warnemuende.csv', 'out/test', 'RangeScaleNM', 2)
 ```
 
-Beim ersten Aufruf wird `cache/` aus dem in der Szenen-Konfiguration eingetragenen DOM-Ordner und `rostock_dem/` (DGM, optional) gebaut: alle Kacheln in 2, 5 und 10 m. Das dauert einmalig einige Minuten und belegt etwa 0,7 GB. Ändern sich die Klassifikationsparameter oder der DGM-Ordner, baut sich der Cache beim nächsten Lauf automatisch neu (`cache/cache_stamp.json`); erzwingen mit `mrsim.dem.buildTileCache(scene, 'Force', true)`.
+Das Repo läuft unter Windows und Linux. Maschinenspezifische Pfade stehen nur in `config/local.json` (nicht eingecheckt). Weiterarbeit mit KI-Assistenten: `AGENTS.md`; Kontext, Formeln, Entscheidungen und Roadmap in `docs/`.
 
-Mit DGM wird die Objekthöhe direkt als nDOM = DOM − DGM bestimmt; Kacheln ohne DGM (z. B. die südlichste Reihe) fallen automatisch auf die DOM-Heuristik zurück. Gebäude vs. Vegetation: Ebenheit der Dachflächen (|Laplace(DOM)| im Objektinneren).
+Beim ersten Aufruf wird `cache/` gebaut: alle DOM-Kacheln in 2, 5 und 10 m (einige Minuten, etwa 0,7 GB). Ändern sich die Klassifikationsparameter oder der DGM-Ordner, baut sich der Cache automatisch neu (`cache/cache_stamp.json`).
+
+Das Raycasting nutzt nur das DOM. Das DGM ist optional und dient der Klassifikation (Objekthöhe = DOM − DGM); Kacheln ohne DGM nutzen eine Schätzung aus dem DOM.
+
+## Kalibrierung an echten Scans
+
+```matlab
+radar = mrsim.config.loadJson('config/quantum2.json');
+mrsim.real.inspectNpz('aufnahme.npz')                          % Schluessel ansehen
+scans = mrsim.real.importNpzScans('ordner', 'config/real_npz_mapping.json', radar, 'data/real');
+result = runCalibration('data/real', 'out/calib');             % Report + kalibrierte JSONs
+```
+Ohne echte Daten prüft `runCalibrationRecovery` das Verfahren an synthetischer Wahrheit. Formate in `docs/DATENFORMATE.md`, Verfahren in `docs/MODELL.md`.
+
+## Weitere Gebiete (Portugal)
+
+```matlab
+% Pfad zu den DSM-Kacheln in config/local.json:  "scene_portugal": {"dom_dir": "C:/.../Portugal_DSM_50cm"}
+simulatePpiFromCsv('examples/probe_sesimbra.csv', 'out/sesimbra', 'Scene', 'config/scene_portugal.json', 'RangeScaleNM', 2)
+```
+Neue Gebiete brauchen nur eine Szenendatei: `tile_scheme: "geotiff"` und das passende `crs`. Der Cache liegt je Szene in einem eigenen Ordner (`cache_dir`).
+
+## Tonnen und Baken
+
+```matlab
+mrsim.scene.downloadSeamarks([54.05 11.90 54.35 12.40], 'data/targets_rostock.csv')
+% danach in config/scene_rostock.json: "targets": { "file": "data/targets_rostock.csv", ... }
+```
 
 ## CSV-Format
 
@@ -48,23 +76,21 @@ Trennzeichen `,` oder `;`. Pflicht sind nur `lat` und `lon` (WGS84/ETRS89).
 ## Struktur
 
 ```
-simulatePpiFromCsv.m        Einstiegspunkt
-config/quantum2.json        Radar (Datenblatt + Annahmen je Range-Scale, Empfängerkette)
-config/scene_rostock.json   DOM-Pfad, Cache, Klassifikation, Reflektivitätsmodelle
-+mrsim/+dem                 Kachel lesen, Cache (max-Aggregation), Mosaik, LRU
-+mrsim/+scene               Klassifikation See/flach/Wald/Bebauung (nDOM aus DGM, sonst Heuristik)
-+mrsim/+geo                 UTM (Krüger), Meridiankonvergenz, CSV, Heading
-+mrsim/+refl                sigma0-LUT (Radar Toolbox: seareflectivity NRL / landreflectivity Nathanson)
-+mrsim/+render              ppiFast, ppiIQ, Gauss-PSF, Empfängerkette, polar→kartesisch
+simulatePpiFromCsv.m        CSV -> simulierte Scans
+runCalibration.m            echte Scans -> kalibrierte Konfiguration + Report
+config/                     quantum2.json, scene_rostock.json, calibration.json, real_*_mapping.json
++mrsim/+dem                 Kachel lesen, Cache (max-Aggregation), Mosaik
++mrsim/+scene               Klassifikation, Punktziele (Tonnen)
++mrsim/+geo                 UTM (Krüger), Meridiankonvergenz, CSV, Heading, Pose
++mrsim/+refl                sigma0-Tabelle (Radar Toolbox: seareflectivity NRL / landreflectivity Nathanson)
++mrsim/+render              sceneResponse, sensorModel, receiverChain, ppiFast, ppiIQ
++mrsim/+real                echte Scans: NPZ, MCAP, kartesische PNG, fehlende Spokes
++mrsim/+calib               Abweichungsmaß, Kalibrierung, Leave-one-out
 +mrsim/+io                  PNG/MAT/index.csv
-tests/runAllTests.m         Selbsttests (UTM vs. PROJ, Heading, Schatten, Orientierung, Klassifikation)
+tests/                      runAllTests, runCalibrationRecovery
+docs/                       KONTEXT, MODELL, ENTSCHEIDUNGEN, ROADMAP, DATENFORMATE
 ```
 
-## Kalibrierung (offen)
+## Offene Annahmen
 
-Folgende Werte sind Annahmen und sollten an echten Quantum-2-Aufnahmen mit GNSS-Pose angepasst werden:
-
-- `receiver.*`: STC, Gain, floor/sat in dB
-- `range_scales[].*`: PRF, Bandbreite, Pulslänge
-- `antenna_gain_db`, `sidelobe_*`, `bin_range_factor`
-- Klassen-Schwellen in `scene_rostock.json`
+Mit `_assumed` oder `_`-Kommentar in den JSON-Dateien markiert; vollständige Liste in `docs/ENTSCHEIDUNGEN.md`.

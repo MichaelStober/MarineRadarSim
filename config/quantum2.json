@@ -18,9 +18,12 @@
   "n_spokes": 2048,
   "n_bins": 1024,
   "pixel_max": 252,
-  "antenna_height_m": 5.0,
+  "antenna_height_m": 3.0,
   "min_range_m": 6,
   "bin_range_factor": 1.0,
+  "azimuth_offset_deg": 0.0,
+  "_azimuth_offset_deg": "Montage-Offset: Spoke 0 zeigt um diesen Winkel im Uhrzeigersinn neben den Bug (Kalibrierparameter)",
+  "range_res_scale": 1.0,
   "_bin_range_factor": "Laenge der 1024 Bins = RangeScale * Faktor (an echter Aufnahme pruefen)",
 
   "range_scales": [

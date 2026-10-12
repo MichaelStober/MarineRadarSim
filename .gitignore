@@ -2,3 +2,9 @@ cache/
 out/
 *.asv
 rostock_dem/
+rostock_dom/
+portugal_dsm/
+data/
+config/local.json
+__pycache__/
+*.pyc

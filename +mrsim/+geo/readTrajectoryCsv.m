@@ -19,7 +19,7 @@ function trk = readTrajectoryCsv(csvPath)
     else
         delim = ',';
     end
-    names = lower(strtrim(strsplit(header, delim)));
+    names = lower(strtrim(strsplit(header, delim, 'CollapseDelimiters', false)));
     names{1} = strrep(names{1}, char(65279), '');           % UTF-8-BOM (MATLAB dekodiert)
     names = regexprep(names, '^\xEF\xBB\xBF', '');          % UTF-8-BOM (Octave: Rohbytes)
     names = regexprep(names, '^"|"$', '');
@@ -27,7 +27,7 @@ function trk = readTrajectoryCsv(csvPath)
     nRows = numel(lines) - 1;
     cells = cell(nRows, numel(names));
     for i = 1:nRows
-        parts = strsplit(lines{i+1}, delim);
+        parts = strsplit(lines{i+1}, delim, 'CollapseDelimiters', false);
         parts(end+1:numel(names)) = {''};
         cells(i, :) = strtrim(regexprep(parts(1:numel(names)), '^"|"$', ''));
     end

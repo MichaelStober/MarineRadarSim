@@ -1,6 +1,6 @@
 # Implementierungsplan – Quantum-2-PPI-Simulation aus DOM-Daten (MATLAB R2025b)
 
-Stand: 2026-09-24 · Workspace: Projektordner · DOM: in der Szenen-Konfiguration festgelegt
+Stand: 2026-09-24 · Workspace: `C:\Users\michi\Documents\MATLAB\MarineRadar` · DOM: `C:\Users\michi\Documents\TEMP\rostock_dom`
 
 **Ziel:** `simulatePpiFromCsv("track.csv", "out\")` → pro CSV-Zeile (lat, lon[, heading, …]) ein simuliertes Raymarine-Quantum-2-PPI (polar + kartesisch) plus Metadaten und Ground-Truth-Landmaske.
 

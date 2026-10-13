@@ -9,6 +9,7 @@ Dieses Repository gehört zur Masterarbeit von Mike (Michael Stober): GNSS-freie
 4. `docs/MODELL.md` – Formeln und Begründungen (Grundlage des Thesis-Kapitels)
 5. `docs/DATENFORMATE.md` – Ein- und Ausgabeformate
 6. `docs/RECHERCHE_ENTFERNUNGSABFALL.md` – Recherche zur Echointensität über die Entfernung (Quantum 2, 8 NM): Physik, Anzeigekette des Geräts, Befunde der Simulation, Optionen A–C
+7. `docs/UNTERSUCHUNGEN_2026-10.md` – Protokoll aller Untersuchungen und Tests vom Oktober 2026 (km_data, Radargleichung, Umsetzung A/B/C, Seezeichen-Test, Nebenkeulen, Wiederfindung, offene Punkte)
 
 ---
 
